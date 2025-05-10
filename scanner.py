@@ -23,8 +23,16 @@ def main():
         return
 
     # Define the port range
-    start_port = 1
-    end_port = 1024
+       # Get custom port range from the user
+    try:
+        start_port = int(input("Enter start port (e.g. 1): ").strip())
+        end_port   = int(input("Enter end port   (e.g. 1024): ").strip())
+        if start_port < 1 or end_port < start_port or end_port > 65535:
+            raise ValueError
+    except ValueError:
+        print("Invalid port range. Please enter integers: 1 ≤ start ≤ end ≤ 65535.")
+        return
+
 
     print(f"Scanning {host} (resolved from {host_input}) for ports {start_port}-{end_port}...\n")
 
