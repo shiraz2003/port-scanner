@@ -1,4 +1,6 @@
 import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 def scan_port(host: str, port: int, timeout: float = 1.0) -> bool:
     """
@@ -37,13 +39,19 @@ def main():
     print(f"Scanning {host} (resolved from {host_input}) for ports {start_port}-{end_port}...\n")
 
     open_ports = []
-    for port in range(start_port, end_port + 1):
-        if scan_port(host, port):
-            print(f"[+] Port {port} is open")
-            open_ports.append(port)
-        # Optional: Uncomment to see closed ports
-        # else:
-        #     print(f"[-] Port {port} is closed")
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        future_to_port = {
+            executor.submit(scan_port, host, port): port
+            for port in range(start_port, end_port + 1)
+        }
+        for future in as_completed(future_to_port):
+            port = future_to_port[future]
+            try:
+                if future.result():
+                    print(f"[+] Port {port} is open")
+                    open_ports.append(port)
+            except Exception as e:
+                print(f"Error scanning port {port}: {e}")
 
     if open_ports:
         print("\nScan complete! Open ports:")
